@@ -11,7 +11,7 @@ export const useAnecdotes = () => {
     }, [])
 
     const addAnecdote = async (newAnecdote) => {
-        const addedAnecdote = anecdoteService.createNew(newAnecdote)
+        const addedAnecdote = await anecdoteService.createNew(newAnecdote)
         setAnecdotes(current => current.concat(addedAnecdote))
     }
 
