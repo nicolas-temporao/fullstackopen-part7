@@ -1,0 +1,212 @@
+import { useState, useEffect } from 'react'
+import { Container, AppBar, Toolbar, Button } from '@mui/material'
+import blogService from './services/blogs'
+import LoginForm from './components/LoginForm'
+import BlogList from './components/BlogList'
+import BlogView from './components/BlogView'
+import BlogForm from './components/BlogForm'
+import loginService from './services/login'
+import Notification from './components/Notification'
+import './index.css'
+
+import {
+  BrowserRouter as Router,
+  Routes, Route, Link, Navigate
+} from 'react-router-dom'
+
+const App = () => {
+  const [blogs, setBlogs] = useState([])
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [user, setUser] = useState(null)
+  const [notification, setNotification] = useState(null)
+
+
+  const style = { '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }
+  useEffect(() => {
+    blogService.getAll().then(blogs =>
+      setBlogs( blogs )
+    )
+  }, [])
+
+  useEffect(() => {
+    const loggedInUserJSON = window.localStorage.getItem('loggedInUser')
+    if (loggedInUserJSON) {
+      const user = JSON.parse(loggedInUserJSON)
+      setUser(user)
+      blogService.setToken(user.token)
+    }
+  }, [])
+
+  const showMessage = (text, type) => {
+    setNotification({ text: text, type: type})
+
+    setTimeout(() => {
+      setNotification(null)
+    }, 5000)
+  }
+
+  const handleLogin = async (event) => {
+    event.preventDefault()
+    try {
+      const user = await loginService.login({ username, password })
+
+      window.localStorage.setItem('loggedInUser', JSON.stringify(user))
+
+      blogService.setToken(user.token)
+      setUser(user)
+      setUsername('')
+      setPassword('')
+      showMessage('Login Successful', 'success')
+
+    } catch {
+      showMessage('Wrong username or password', 'error')
+    }
+  }
+
+  const handleNewBlog = async (newBlog) => {
+    try {
+      const createdBlog = await blogService.create(newBlog)
+
+      const blogWithUser = {
+        ...createdBlog,
+        user
+      }
+
+      setBlogs(prevBlogs => prevBlogs.concat(blogWithUser))
+
+      showMessage(`A new blog ${createdBlog.title} by ${createdBlog.author} added`, 'success')
+    } catch {
+      showMessage('Failed to create blog', 'error')
+    }
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    blogService.setToken(null)
+    window.localStorage.removeItem('loggedInUser')
+
+  }
+
+  const handleLike = async(blog) => {
+    if (user) {
+        const updatedBlog = {
+          ...blog,
+          likes: blog.likes + 1
+        }
+        const returnedBlog = await blogService.update(blog.id, updatedBlog)
+
+        const blogWithUser = {
+          ...returnedBlog,
+          user: blog.user
+        }
+
+        setBlogs(blogs.map(blog =>
+          blog.id === blogWithUser.id ? blogWithUser : blog))
+    } else{
+      showMessage('Only logged in users can like.', 'error')
+    }
+  }
+
+  const handleRemove = async(blog) => {
+    if (!window.confirm(`Remove ${blog.title} by ${blog.author}?`)) {
+      return false
+    }
+
+    try {
+      await blogService.remove(blog.id)
+
+      showMessage('Deleted blog successfully', 'success')
+      setBlogs(prevBlogs =>
+        prevBlogs.filter(b => b.id !== blog.id)
+      )
+
+      return true
+    } catch {
+      showMessage('Failed to delete blog', 'error')
+      return false
+    }
+  }
+
+  const sortedBlogs = [...blogs].sort((a, b) => b.likes - a.likes)
+  return (
+    <Container>
+      <Router>
+        <div>
+          <AppBar position="static">
+            <Toolbar>
+              <Button color="inherit" component={Link} to="/" sx={style}>blogs</Button>
+              {user === null ? 
+                 (<Button color="inherit" component={Link} to="/login" sx={style}>login</Button>) : 
+                 (
+                  <>
+                    <Button color="inherit" component={Link} to="/create" sx={style}>create new</Button>
+                    <Button color="inherit" onClick={handleLogout} sx={style}>logout</Button>
+                  </>
+                 )
+              }
+            </Toolbar>
+          </AppBar>
+
+          <Notification notification={notification}/>
+          {user !== null && (
+            <p>{user.name} logged in.</p>
+          )}
+
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <BlogList
+                  blogs={sortedBlogs}
+                  handleLike={handleLike}
+                  user={user}
+                  handleRemove={handleRemove}
+                  handleNewBlog={handleNewBlog}
+                />
+              }
+            />
+
+            <Route
+              path="/login"
+              element={
+                user === null ? (
+                  <LoginForm
+                    username={username}
+                    password={password}
+                    handleUserChange={({ target }) => setUsername(target.value)}
+                    handlePassChange={({ target }) => setPassword(target.value)}
+                    handleLogin={handleLogin}
+                  />
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
+
+            <Route 
+              path="/blogs/:id"
+              element={
+                <BlogView 
+                  blogs={blogs}
+                  handleLike={handleLike}
+                  user={user}
+                  handleRemove={handleRemove}
+                />
+              }
+            />
+
+            <Route
+              path="/create"
+              element={ user ? 
+                (<BlogForm createBlog={handleNewBlog}/>) : (<Navigate to="/login" />)
+              }
+            />
+          </Routes>
+        </div>
+      </Router>
+    </Container>
+  )
+}
+
+export default App
