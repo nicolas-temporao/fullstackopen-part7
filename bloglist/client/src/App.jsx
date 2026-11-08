@@ -13,6 +13,7 @@ import {
   BrowserRouter as Router,
   Routes, Route, Link, Navigate
 } from 'react-router-dom'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
@@ -147,62 +148,63 @@ const App = () => {
               }
             </Toolbar>
           </AppBar>
+          <ErrorBoundary>
+            <Notification notification={notification}/>
+            {user !== null && (
+              <p>{user.name} logged in.</p>
+            )}
 
-          <Notification notification={notification}/>
-          {user !== null && (
-            <p>{user.name} logged in.</p>
-          )}
-
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <BlogList
-                  blogs={sortedBlogs}
-                  handleLike={handleLike}
-                  user={user}
-                  handleRemove={handleRemove}
-                  handleNewBlog={handleNewBlog}
-                />
-              }
-            />
-
-            <Route
-              path="/login"
-              element={
-                user === null ? (
-                  <LoginForm
-                    username={username}
-                    password={password}
-                    handleUserChange={({ target }) => setUsername(target.value)}
-                    handlePassChange={({ target }) => setPassword(target.value)}
-                    handleLogin={handleLogin}
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <BlogList
+                    blogs={sortedBlogs}
+                    handleLike={handleLike}
+                    user={user}
+                    handleRemove={handleRemove}
+                    handleNewBlog={handleNewBlog}
                   />
-                ) : (
-                  <Navigate to="/" />
-                )
-              }
-            />
+                }
+              />
 
-            <Route 
-              path="/blogs/:id"
-              element={
-                <BlogView 
-                  blogs={blogs}
-                  handleLike={handleLike}
-                  user={user}
-                  handleRemove={handleRemove}
-                />
-              }
-            />
+              <Route
+                path="/login"
+                element={
+                  user === null ? (
+                    <LoginForm
+                      username={username}
+                      password={password}
+                      handleUserChange={({ target }) => setUsername(target.value)}
+                      handlePassChange={({ target }) => setPassword(target.value)}
+                      handleLogin={handleLogin}
+                    />
+                  ) : (
+                    <Navigate to="/" />
+                  )
+                }
+              />
 
-            <Route
-              path="/create"
-              element={ user ? 
-                (<BlogForm createBlog={handleNewBlog}/>) : (<Navigate to="/login" />)
-              }
-            />
-          </Routes>
+              <Route 
+                path="/blogs/:id"
+                element={
+                  <BlogView 
+                    blogs={blogs}
+                    handleLike={handleLike}
+                    user={user}
+                    handleRemove={handleRemove}
+                  />
+                }
+              />
+
+              <Route
+                path="/create"
+                element={ user ? 
+                  (<BlogForm createBlog={handleNewBlog}/>) : (<Navigate to="/login" />)
+                }
+              />
+            </Routes>
+          </ErrorBoundary>
         </div>
       </Router>
     </Container>
