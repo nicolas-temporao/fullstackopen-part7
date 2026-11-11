@@ -56,9 +56,8 @@ const BlogView = ({ blogs, handleLike, user, handleRemove }) => {
   const blog = blogs.find(blog => blog.id === id)
 
   if (!blog) {
-    return null
+    return <h2>Blog not found.</h2>
   }
-
   const removeBlog = async () => {
     const removed = await handleRemove(blog)
 
