@@ -9,6 +9,7 @@ import BlogForm from './components/BlogForm'
 import loginService from './services/login'
 import Notification from './components/Notification'
 import NotificationContext from './NotificationContext'
+import UserContext from './UserContext'
 import './index.css'
 
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
@@ -17,8 +18,8 @@ import ErrorBoundary from './components/ErrorBoundary'
 const App = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [user, setUser] = useState(null)
   const { dispatch } = useContext(NotificationContext)
+  const { user, setUser } = useContext(UserContext)
   const queryClient = useQueryClient()
 
   const result = useQuery({
