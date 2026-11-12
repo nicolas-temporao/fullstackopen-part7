@@ -10,10 +10,12 @@ import loginService from './services/login'
 import Notification from './components/Notification'
 import NotificationContext from './NotificationContext'
 import UserContext from './UserContext'
+import UserView from './components/UserView'
 import './index.css'
 
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary'
+import UserList from './components/UserList'
 
 const App = () => {
   const [username, setUsername] = useState('')
@@ -36,19 +38,25 @@ const App = () => {
   })
 
   const likeBlogMutation = useMutation({
-    mutationFn: ({id, updatedBlog}) => blogService.update(id, updatedBlog),
+    mutationFn: ({ id, updatedBlog }) => blogService.update(id, updatedBlog),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blogs'] })
     }
   })
 
-    const removeBlogMutation = useMutation({
+  const removeBlogMutation = useMutation({
     mutationFn: blogService.remove,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blogs'] })
     }
   })
 
+  const addCommentMutation = useMutation({
+    mutationFn: ({ id, comment }) => blogService.addComment(id, comment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blogs'] })
+    }
+  })
 
   const style = { '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }
 
@@ -112,8 +120,7 @@ const App = () => {
       ...blog,
       likes: blog.likes + 1
     }
-    await likeBlogMutation.mutateAsync({id: blog.id, updatedBlog})
-    
+    await likeBlogMutation.mutateAsync({ id: blog.id, updatedBlog })
   }
 
   const handleRemove = async (blog) => {
@@ -132,6 +139,16 @@ const App = () => {
     }
   }
 
+  const handleComment = async (id, comment) => {
+    try {
+      await addCommentMutation.mutateAsync({id, comment})
+      return true
+    }catch{
+      showMessage('Failed to add comment', 'error')
+      return false
+    }
+  }
+
   const sortedBlogs = [...blogs].sort((a, b) => b.likes - a.likes)
   return (
     <Container>
@@ -141,6 +158,9 @@ const App = () => {
             <Toolbar>
               <Button color="inherit" component={Link} to="/" sx={style}>
                 blogs
+              </Button>
+              <Button color="inherit" component={Link} to="/users" sx={style}>
+                users
               </Button>
               {user === null ? (
                 <Button color="inherit" component={Link} to="/login" sx={style}>
@@ -201,6 +221,7 @@ const App = () => {
                     handleLike={handleLike}
                     user={user}
                     handleRemove={handleRemove}
+                    handleComment={handleComment}
                   />
                 }
               />
@@ -209,6 +230,10 @@ const App = () => {
                 path="/create"
                 element={user ? <BlogForm createBlog={handleNewBlog} /> : <Navigate to="/login" />}
               />
+
+              <Route path="/users" element={<UserList />} />
+
+              <Route path="users/:id" element={<UserView />} />
 
               <Route path="*" element={<h1>Error: Page Not Found</h1>} />
             </Routes>
