@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, CardContent, Button, Typography } from '@mui/material'
-
+import { Card, CardContent, Button, Typography, TextField } from '@mui/material'
 const BlogDetails = ({ blog, handleLike, user, handleRemove, handleComment }) => {
+  const [comment, setComment] = useState('')
+
   if (!blog) {
     return null
   }
-
-  const [comment, setComment] = useState('')
 
   const submitComment = async (event) => {
     event.preventDefault()
@@ -71,7 +70,7 @@ const BlogDetails = ({ blog, handleLike, user, handleRemove, handleComment }) =>
   )
 }
 
-const BlogView = ({ blogs, handleLike, user, handleRemove }) => {
+const BlogView = ({ blogs, handleLike, user, handleRemove, handleComment }) => {
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -88,7 +87,7 @@ const BlogView = ({ blogs, handleLike, user, handleRemove }) => {
     }
   }
 
-  return <BlogDetails blog={blog} handleLike={handleLike} user={user} handleRemove={removeBlog} />
+  return <BlogDetails blog={blog} handleLike={handleLike} user={user} handleRemove={removeBlog} handleComment={handleComment} />
 }
 
 export { BlogDetails }
