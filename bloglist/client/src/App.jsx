@@ -12,7 +12,7 @@ import NotificationContext from './NotificationContext'
 import UserContext from './UserContext'
 import UserView from './components/UserView'
 import './index.css'
-
+import { getUser, saveUser, removeUser } from './services/persistentUser'
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary'
 import UserList from './components/UserList'
@@ -61,9 +61,8 @@ const App = () => {
   const style = { '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }
 
   useEffect(() => {
-    const loggedInUserJSON = window.localStorage.getItem('loggedInUser')
-    if (loggedInUserJSON) {
-      const user = JSON.parse(loggedInUserJSON)
+    const user = getUser()
+    if (user) {
       setUser(user)
       blogService.setToken(user.token)
     }
@@ -82,7 +81,7 @@ const App = () => {
     try {
       const user = await loginService.login({ username, password })
 
-      window.localStorage.setItem('loggedInUser', JSON.stringify(user))
+      saveUser(user)
 
       blogService.setToken(user.token)
       setUser(user)
@@ -107,7 +106,7 @@ const App = () => {
   const handleLogout = () => {
     setUser(null)
     blogService.setToken(null)
-    window.localStorage.removeItem('loggedInUser')
+    removeUser()
   }
 
   const handleLike = async (blog) => {

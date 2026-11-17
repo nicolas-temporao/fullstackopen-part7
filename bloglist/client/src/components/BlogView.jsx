@@ -8,6 +8,9 @@ const BlogDetails = ({ blog, handleLike, user, handleRemove, handleComment }) =>
     return null
   }
 
+  if(!blog.user){
+    throw new Error('Blog has no user')
+  }
   const submitComment = async (event) => {
     event.preventDefault()
 
